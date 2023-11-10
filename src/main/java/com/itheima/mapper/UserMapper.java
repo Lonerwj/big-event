@@ -14,4 +14,5 @@ public interface UserMapper {
     @Insert("INSERT big_event.user(username, password, create_time, update_time) " +
             "VALUES (#{username},#{password}, now(),now())")
     void add(String username, String password);
+
 }
