@@ -26,4 +26,19 @@ public class UserServiceImpl implements UserService {
         userMapper.add(username,md5String);
     }
 
+    @Override
+    public void update(User user) {
+        userMapper.update(user);
+    }
+
+    @Override
+    public void updateAvatar(String avatarUrl, Integer userId) {
+        userMapper.updateAvatar(avatarUrl,userId);
+    }
+
+    @Override
+    public void updatePassword(String newPwd, String username) {
+        userMapper.updatePassword(Md5Util.getMD5String(newPwd),username);
+    }
+
 }
