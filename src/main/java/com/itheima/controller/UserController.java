@@ -10,6 +10,8 @@ import jakarta.validation.constraints.Pattern;
 import org.hibernate.validator.constraints.URL;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/user")
@@ -25,6 +28,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     @PostMapping("/register")
     public Result register(@Pattern(regexp = "^\\S{5,16}$") String username, @Pattern(regexp = "^\\S{5,16}$") String password) {
@@ -52,6 +58,9 @@ public class UserController {
             claims.put("id", user.getId());
             claims.put("username", user.getUsername());
             String token = JwtUtil.genToken(claims);
+            //将token存入redis
+            ValueOperations<String, String> operations = stringRedisTemplate.opsForValue();
+            operations.set("token",token,12, TimeUnit.HOURS);
             return Result.success(token);
         } else return Result.error("密码错误");
     }
@@ -111,6 +120,9 @@ public class UserController {
         }
         //修改密码
         userService.updatePassword(newPwd,username);
+        //删除redis中的token
+        ValueOperations<String, String> operations = stringRedisTemplate.opsForValue();
+        operations.getOperations().delete("token");
         return Result.success();
     }
 }
